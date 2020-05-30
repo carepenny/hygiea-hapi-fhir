@@ -2,24 +2,24 @@ FROM hapiproject/hapi:base as build-hapi
 
 ARG HAPI_FHIR_URL=https://github.com/jamesagnew/hapi-fhir/
 ARG HAPI_FHIR_BRANCH=master
-ARG HAPI_FHIR_STARTER_URL=https://github.com/hapifhir/hapi-fhir-jpaserver-starter/
+ARG HAPI_FHIR_STARTER_URL=https://github.com/carepenny/hygiea-hapi-fhir
 ARG HAPI_FHIR_STARTER_BRANCH=master
 
 RUN git clone --branch ${HAPI_FHIR_BRANCH} ${HAPI_FHIR_URL}
 WORKDIR /tmp/hapi-fhir/
 RUN /tmp/apache-maven-3.6.2/bin/mvn dependency:resolve
-RUN /tmp/apache-maven-3.6.2/bin/mvn install -DskipTests
+RUN /tmp/apache-maven-3.6.2/bin/mvn install -DskipTests -Dhapi.properties=/src/main/resources/hygiea-hapi.properties
 
 WORKDIR /tmp
 RUN git clone --branch ${HAPI_FHIR_STARTER_BRANCH} ${HAPI_FHIR_STARTER_URL}
 
-WORKDIR /tmp/hapi-fhir-jpaserver-starter
+WORKDIR /tmp/hygiea-hapi
 RUN /tmp/apache-maven-3.6.2/bin/mvn clean install -DskipTests
 
 FROM tomcat:9-jre11
 
 RUN mkdir -p /data/hapi/lucenefiles && chmod 775 /data/hapi/lucenefiles
-COPY --from=build-hapi /tmp/hapi-fhir-jpaserver-starter/target/*.war /usr/local/tomcat/webapps/
+COPY --from=build-hapi /tmp/hygiea-hapi/target/*.war /usr/local/tomcat/webapps/
 
 EXPOSE 8080
 
